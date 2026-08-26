@@ -19,6 +19,7 @@
 
 #include "qgsdoublevalidator.h"
 #include "qgsmultibandcolorrenderer.h"
+#include "qgsrasternumericformatutils.h"
 #include "qgsrasterdataprovider.h"
 #include "qgsrasterlayer.h"
 #include "qgsrasterminmaxwidget.h"
@@ -33,12 +34,12 @@ QgsMultiBandColorRendererWidget::QgsMultiBandColorRendererWidget( QgsRasterLayer
   : QgsRasterRendererWidget( layer, extent )
 {
   setupUi( this );
-  connect( mRedMinLineEdit, &QLineEdit::textChanged, this, &QgsMultiBandColorRendererWidget::mRedMinLineEdit_textChanged );
-  connect( mRedMaxLineEdit, &QLineEdit::textChanged, this, &QgsMultiBandColorRendererWidget::mRedMaxLineEdit_textChanged );
-  connect( mGreenMinLineEdit, &QLineEdit::textChanged, this, &QgsMultiBandColorRendererWidget::mGreenMinLineEdit_textChanged );
-  connect( mGreenMaxLineEdit, &QLineEdit::textChanged, this, &QgsMultiBandColorRendererWidget::mGreenMaxLineEdit_textChanged );
-  connect( mBlueMinLineEdit, &QLineEdit::textChanged, this, &QgsMultiBandColorRendererWidget::mBlueMinLineEdit_textChanged );
-  connect( mBlueMaxLineEdit, &QLineEdit::textChanged, this, &QgsMultiBandColorRendererWidget::mBlueMaxLineEdit_textChanged );
+  connect( mRedMinLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsMultiBandColorRendererWidget::mRedMinLineEdit_valueChanged );
+  connect( mRedMaxLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsMultiBandColorRendererWidget::mRedMaxLineEdit_valueChanged );
+  connect( mGreenMinLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsMultiBandColorRendererWidget::mGreenMinLineEdit_valueChanged );
+  connect( mGreenMaxLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsMultiBandColorRendererWidget::mGreenMaxLineEdit_valueChanged );
+  connect( mBlueMinLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsMultiBandColorRendererWidget::mBlueMinLineEdit_valueChanged );
+  connect( mBlueMaxLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsMultiBandColorRendererWidget::mBlueMaxLineEdit_valueChanged );
   createValidators();
 
   if ( mRasterLayer )
@@ -121,12 +122,12 @@ void QgsMultiBandColorRendererWidget::setMapCanvas( QgsMapCanvas *canvas )
 
 void QgsMultiBandColorRendererWidget::createValidators()
 {
-  mRedMinLineEdit->setValidator( new QgsDoubleValidator( mRedMinLineEdit ) );
-  mRedMaxLineEdit->setValidator( new QgsDoubleValidator( mRedMinLineEdit ) );
-  mGreenMinLineEdit->setValidator( new QgsDoubleValidator( mGreenMinLineEdit ) );
-  mGreenMaxLineEdit->setValidator( new QgsDoubleValidator( mGreenMinLineEdit ) );
-  mBlueMinLineEdit->setValidator( new QgsDoubleValidator( mBlueMinLineEdit ) );
-  mBlueMaxLineEdit->setValidator( new QgsDoubleValidator( mBlueMinLineEdit ) );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mRedMinLineEdit );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mRedMaxLineEdit );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mGreenMinLineEdit );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mGreenMaxLineEdit );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mBlueMinLineEdit );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mBlueMaxLineEdit );
 }
 
 void QgsMultiBandColorRendererWidget::setCustomMinMaxValues( QgsMultiBandColorRenderer *r, const QgsRasterDataProvider *provider, int redBand, int greenBand, int blueBand )
@@ -199,32 +200,32 @@ void QgsMultiBandColorRendererWidget::onBandChanged( int index )
   emit widgetChanged();
 }
 
-void QgsMultiBandColorRendererWidget::mRedMinLineEdit_textChanged( const QString & )
+void QgsMultiBandColorRendererWidget::mRedMinLineEdit_valueChanged( double )
 {
   minMaxModified();
 }
 
-void QgsMultiBandColorRendererWidget::mRedMaxLineEdit_textChanged( const QString & )
+void QgsMultiBandColorRendererWidget::mRedMaxLineEdit_valueChanged( double )
 {
   minMaxModified();
 }
 
-void QgsMultiBandColorRendererWidget::mGreenMinLineEdit_textChanged( const QString & )
+void QgsMultiBandColorRendererWidget::mGreenMinLineEdit_valueChanged( double )
 {
   minMaxModified();
 }
 
-void QgsMultiBandColorRendererWidget::mGreenMaxLineEdit_textChanged( const QString & )
+void QgsMultiBandColorRendererWidget::mGreenMaxLineEdit_valueChanged( double )
 {
   minMaxModified();
 }
 
-void QgsMultiBandColorRendererWidget::mBlueMinLineEdit_textChanged( const QString & )
+void QgsMultiBandColorRendererWidget::mBlueMinLineEdit_valueChanged( double )
 {
   minMaxModified();
 }
 
-void QgsMultiBandColorRendererWidget::mBlueMaxLineEdit_textChanged( const QString & )
+void QgsMultiBandColorRendererWidget::mBlueMaxLineEdit_valueChanged( double )
 {
   minMaxModified();
 }
@@ -246,7 +247,8 @@ void QgsMultiBandColorRendererWidget::loadMinMax( int bandNo, double min, double
 {
   QgsDebugMsgLevel( u"theBandNo = %1 min = %2 max = %3"_s.arg( bandNo ).arg( min ).arg( max ), 2 );
 
-  QLineEdit *myMinLineEdit, *myMaxLineEdit;
+  QgsDoubleSpinBox *myMinLineEdit = nullptr;
+  QgsDoubleSpinBox *myMaxLineEdit = nullptr;
 
   if ( mRedBandComboBox->currentBand() == bandNo )
   {
@@ -276,7 +278,7 @@ void QgsMultiBandColorRendererWidget::loadMinMax( int bandNo, double min, double
   }
   else
   {
-    myMinLineEdit->setText( QLocale().toString( min ) );
+    myMinLineEdit->setValue( min );
   }
 
   if ( std::isnan( max ) )
@@ -285,12 +287,12 @@ void QgsMultiBandColorRendererWidget::loadMinMax( int bandNo, double min, double
   }
   else
   {
-    myMaxLineEdit->setText( QLocale().toString( max ) );
+    myMaxLineEdit->setValue( max );
   }
   mDisableMinMaxWidgetRefresh = false;
 }
 
-void QgsMultiBandColorRendererWidget::setMinMaxValue( const QgsContrastEnhancement *ce, QLineEdit *minEdit, QLineEdit *maxEdit )
+void QgsMultiBandColorRendererWidget::setMinMaxValue( const QgsContrastEnhancement *ce, QgsDoubleSpinBox *minEdit, QgsDoubleSpinBox *maxEdit )
 {
   if ( !minEdit || !maxEdit )
   {
@@ -304,8 +306,8 @@ void QgsMultiBandColorRendererWidget::setMinMaxValue( const QgsContrastEnhanceme
     return;
   }
 
-  minEdit->setText( QLocale().toString( ce->minimumValue() ) );
-  maxEdit->setText( QLocale().toString( ce->maximumValue() ) );
+  minEdit->setValue( ce->minimumValue() );
+  maxEdit->setValue( ce->maximumValue() );
 
   // QgsMultiBandColorRenderer is using individual contrast enhancements for each
   // band, but this widget GUI has one for all
@@ -384,13 +386,22 @@ void QgsMultiBandColorRendererWidget::setMin( const QString &value, int index )
   switch ( index )
   {
     case 0:
-      mRedMinLineEdit->setText( value );
+      if ( value.isEmpty() )
+        mRedMinLineEdit->clear();
+      else
+        mRedMinLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
       break;
     case 1:
-      mGreenMinLineEdit->setText( value );
+      if ( value.isEmpty() )
+        mGreenMinLineEdit->clear();
+      else
+        mGreenMinLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
       break;
     case 2:
-      mBlueMinLineEdit->setText( value );
+      if ( value.isEmpty() )
+        mBlueMinLineEdit->clear();
+      else
+        mBlueMinLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
       break;
     default:
       break;
@@ -404,13 +415,22 @@ void QgsMultiBandColorRendererWidget::setMax( const QString &value, int index )
   switch ( index )
   {
     case 0:
-      mRedMaxLineEdit->setText( value );
+      if ( value.isEmpty() )
+        mRedMaxLineEdit->clear();
+      else
+        mRedMaxLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
       break;
     case 1:
-      mGreenMaxLineEdit->setText( value );
+      if ( value.isEmpty() )
+        mGreenMaxLineEdit->clear();
+      else
+        mGreenMaxLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
       break;
     case 2:
-      mBlueMaxLineEdit->setText( value );
+      if ( value.isEmpty() )
+        mBlueMaxLineEdit->clear();
+      else
+        mBlueMaxLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
       break;
     default:
       break;

@@ -130,7 +130,7 @@
        </layout>
       </item>
       <item row="1" column="1">
-       <widget class="QLineEdit" name="leNoDataValue">
+       <widget class="QgsDoubleSpinBox" name="leNoDataValue">
         <property name="toolTip">
          <string>Additional user defined NoData value.</string>
         </property>
@@ -375,6 +375,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>QgsDoubleSpinBox</class>
+   <extends>QDoubleSpinBox</extends>
+   <header>qgsdoublespinbox.h</header>
+  </customwidget>
   <customwidget>
    <class>QgsCollapsibleGroupBox</class>
    <extends>QGroupBox</extends>
