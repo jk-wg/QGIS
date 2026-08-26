@@ -24,6 +24,7 @@
 #include "qgsgui.h"
 #include "qgsiconutils.h"
 #include "qgsmemoryproviderutils.h"
+#include "qgsproject.h"
 #include "qgsvariantutils.h"
 #include "qgsvectorlayer.h"
 
@@ -38,6 +39,26 @@
 
 using namespace Qt::StringLiterals;
 
+namespace
+{
+  constexpr int FIRST_SCRATCH_LAYER_SUFFIX = 1;
+
+  QString generateScratchLayerName( Qgis::WkbType geometryType, const QgsProject *project )
+  {
+    const QString baseName = QgsWkbTypes::translatedDisplayString( geometryType );
+    const QgsProject *targetProject = project ? project : QgsProject::instance();
+
+    int suffix = FIRST_SCRATCH_LAYER_SUFFIX;
+    QString layerName = QStringLiteral( "%1_%2" ).arg( baseName ).arg( suffix );
+    while ( targetProject && !targetProject->mapLayersByName( layerName ).isEmpty() )
+    {
+      layerName = QStringLiteral( "%1_%2" ).arg( baseName ).arg( ++suffix );
+    }
+
+    return layerName;
+  }
+}
+
 QgsVectorLayer *QgsNewMemoryLayerDialog::runAndCreateLayer( QWidget *parent, const QgsCoordinateReferenceSystem &defaultCrs )
 {
   QgsNewMemoryLayerDialog dialog( parent );
@@ -49,7 +70,7 @@ QgsVectorLayer *QgsNewMemoryLayerDialog::runAndCreateLayer( QWidget *parent, con
 
   const Qgis::WkbType geometrytype = dialog.selectedType();
   const QgsFields fields = dialog.fields();
-  const QString name = dialog.layerName().isEmpty() ? tr( "New scratch layer" ) : dialog.layerName();
+  const QString name = resolvedLayerName( dialog.layerName(), geometrytype, QgsProject::instance() );
   QgsVectorLayer *newLayer = QgsMemoryProviderUtils::createMemoryLayer( name, fields, geometrytype, dialog.crs() );
   return newLayer;
 }
@@ -60,7 +81,7 @@ QgsNewMemoryLayerDialog::QgsNewMemoryLayerDialog( QWidget *parent, Qt::WindowFla
   setupUi( this );
   QgsGui::enableAutoGeometryRestore( this );
 
-  mNameLineEdit->setText( tr( "New scratch layer" ) );
+  mNameLineEdit->setPlaceholderText( tr( "[New scratch layer]" ) );
 
   const Qgis::WkbType geomTypes[] = {
     Qgis::WkbType::NoGeometry,
@@ -117,6 +138,7 @@ QgsNewMemoryLayerDialog::QgsNewMemoryLayerDialog( QWidget *parent, Qt::WindowFla
   mOkButton->setEnabled( false );
 
   connect( mGeometryTypeBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsNewMemoryLayerDialog::geometryTypeChanged );
+  connect( mNameLineEdit, &QLineEdit::textChanged, this, [this] { geometryTypeChanged( mGeometryTypeBox->currentIndex() ); } );
   connect( mFieldNameEdit, &QLineEdit::textChanged, this, &QgsNewMemoryLayerDialog::fieldNameChanged );
   connect( mTypeBox, static_cast<void ( QComboBox::* )( int )>( &QComboBox::currentIndexChanged ), this, &QgsNewMemoryLayerDialog::mTypeBox_currentIndexChanged );
   connect( mAttributeView, &QTreeWidget::itemSelectionChanged, this, &QgsNewMemoryLayerDialog::selectionChanged );
@@ -131,6 +153,11 @@ QgsNewMemoryLayerDialog::QgsNewMemoryLayerDialog( QWidget *parent, Qt::WindowFla
 
   mNameLineEdit->selectAll();
   mNameLineEdit->setFocus();
+}
+
+QString QgsNewMemoryLayerDialog::resolvedLayerName( const QString &name, Qgis::WkbType geometryType, const QgsProject *project )
+{
+  return name.trimmed().isEmpty() ? generateScratchLayerName( geometryType, project ) : name;
 }
 
 Qgis::WkbType QgsNewMemoryLayerDialog::selectedType() const
@@ -152,13 +179,14 @@ Qgis::WkbType QgsNewMemoryLayerDialog::selectedType() const
 void QgsNewMemoryLayerDialog::geometryTypeChanged( int )
 {
   const Qgis::WkbType geomType = static_cast<Qgis::WkbType>( mGeometryTypeBox->currentData( Qt::UserRole ).toInt() );
+  const bool hasGeometryType = mGeometryTypeBox->currentIndex() != -1;
 
-  const bool isSpatial = geomType != Qgis::WkbType::NoGeometry;
+  const bool isSpatial = hasGeometryType && geomType != Qgis::WkbType::NoGeometry;
   mGeometryWithZCheckBox->setEnabled( isSpatial );
   mGeometryWithMCheckBox->setEnabled( isSpatial );
   mCrsSelector->setEnabled( isSpatial );
 
-  const bool ok = ( !mNameLineEdit->text().isEmpty() && mGeometryTypeBox->currentIndex() != -1 );
+  const bool ok = hasGeometryType;
   mOkButton->setEnabled( ok );
 }
 

@@ -46,6 +46,7 @@ set(TESTS
   testqgsmapcanvas.cpp
   testqgsmaptoolcapture.cpp
   testqgsmessagebar.cpp
+  testqgsnewmemorylayerdialog.cpp
   testprojectionissues.cpp
   testqgsgui.cpp
   testqgsgdalguiutils.cpp
