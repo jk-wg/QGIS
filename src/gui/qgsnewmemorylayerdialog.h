@@ -25,6 +25,7 @@
 #include "qgswkbtypes.h"
 
 class QgsFields;
+class QgsProject;
 class QgsVectorLayer;
 
 /**
@@ -67,6 +68,14 @@ class GUI_EXPORT QgsNewMemoryLayerDialog : public QDialog, private Ui::QgsNewMem
 
     //! Returns the layer name
     QString layerName() const;
+
+    /**
+     * Returns the resolved layer name for a scratch layer with the specified geometry type.
+     *
+     * If the input \a name is empty after normalization, a unique geometry-based name is generated
+     * against the specified \a project, or the current project when no project is specified.
+     */
+    static QString resolvedLayerName( const QString &name, Qgis::WkbType geometryType, const QgsProject *project = nullptr );
 
     /**
      * Returns attributes for the new layer.
