@@ -13,6 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 #include "qgsapplication.h"
+#include "qgsdoublespinbox.h"
 #include "qgsrasterlayer.h"
 #include "qgsrastershader.h"
 #include "qgssinglebandpseudocolorrenderer.h"
@@ -98,6 +99,8 @@ void TestQgsSingleBandPseudoColorRendererWidget::testEditLabel()
   mRasterLayer->setRenderer( rasterRenderer );
 
   QgsSingleBandPseudoColorRendererWidget widget( mRasterLayer );
+  QVERIFY( qobject_cast<QgsDoubleSpinBox *>( widget.mMinLineEdit ) );
+  QVERIFY( qobject_cast<QgsDoubleSpinBox *>( widget.mMaxLineEdit ) );
 
   // force loading min/max with the same exact values
   // it should not triggers classification and we should get the initial ramp item
@@ -117,6 +120,10 @@ void TestQgsSingleBandPseudoColorRendererWidget::testEditLabel()
   QCOMPARE( widget.mMaxLineEdit->text(), widget.displayValueWithMaxPrecision( widget.mColorRampShaderWidget->maximum() ) );
   QCOMPARE( widget.mMinLineEdit->text(), widget.displayValueWithMaxPrecision( widget.mColorRampShaderWidget->shader().minimumValue() ) );
   QCOMPARE( widget.mMaxLineEdit->text(), widget.displayValueWithMaxPrecision( widget.mColorRampShaderWidget->shader().maximumValue() ) );
+
+  const double oldMinimum = widget.mColorRampShaderWidget->minimum();
+  widget.mMinLineEdit->stepBy( 1 );
+  QCOMPARE( widget.mColorRampShaderWidget->minimum(), oldMinimum + 1.0 );
 
   // change the min/max
   widget.loadMinMax( 1, min + 1.0, max - 1.0 );

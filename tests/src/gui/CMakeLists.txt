@@ -94,7 +94,8 @@ foreach(TESTSRC ${TESTS})
 endforeach(TESTSRC)
 
 add_qgis_test(testqgsrasterlayersaveasdialog.cpp MODULE gui LINKEDLIBRARIES qgis_gui qgis_analysis)
-add_qgis_test(testqgslistwidget.cpp MODULE gui LINKEDLIBRARIES qgis_gui qgis_analysis)
+add_qgis_test(testqgsrastertransparencywidget.cpp
+testqgslistwidget.cpp MODULE gui LINKEDLIBRARIES qgis_gui qgis_analysis)
 
 if (ENABLE_PGTEST)
   SET_TESTS_PROPERTIES(

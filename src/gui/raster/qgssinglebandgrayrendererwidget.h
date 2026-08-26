@@ -83,8 +83,8 @@ class GUI_EXPORT QgsSingleBandGrayRendererWidget : public QgsRasterRendererWidge
 
   private slots:
     void bandChanged();
-    void mMinLineEdit_textChanged( const QString & );
-    void mMaxLineEdit_textChanged( const QString & );
+    void mMinLineEdit_valueChanged( double );
+    void mMaxLineEdit_valueChanged( double );
     void showLegendSettings();
 
   private:

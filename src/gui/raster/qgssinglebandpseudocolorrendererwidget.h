@@ -87,14 +87,13 @@ class GUI_EXPORT QgsSingleBandPseudoColorRendererWidget : public QgsRasterRender
 
   private slots:
     void bandChanged();
-    void mMinLineEdit_textChanged( const QString & );
-    void mMaxLineEdit_textChanged( const QString & );
-    void mMinLineEdit_textEdited( const QString &text );
-    void mMaxLineEdit_textEdited( const QString &text );
+    void mMinLineEdit_valueChanged( double value );
+    void mMaxLineEdit_valueChanged( double value );
 
   private:
-    void setLineEditValue( QLineEdit *lineEdit, double value );
-    double lineEditValue( const QLineEdit *lineEdit ) const;
+    void setLineEditValue( QgsDoubleSpinBox *lineEdit, double value );
+    double lineEditValue( const QgsDoubleSpinBox *lineEdit ) const;
+    void updateMinMaxSpinBoxPrecision();
 
     QgsRasterMinMaxWidget *mMinMaxWidget = nullptr;
     int mMinMaxOrigin = 0;

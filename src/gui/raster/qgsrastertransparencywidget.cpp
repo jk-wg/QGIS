@@ -19,6 +19,7 @@
 #include "qgsmapcanvas.h"
 #include "qgsmapsettings.h"
 #include "qgsmaptoolemitpoint.h"
+#include "qgsrasternumericformatutils.h"
 #include "qgsrasterdataprovider.h"
 #include "qgsrasteridentifyresult.h"
 #include "qgsrasterlayer.h"
@@ -62,8 +63,8 @@ QgsRasterTransparencyWidget::QgsRasterTransparencyWidget( QgsRasterLayer *layer,
   connect( mOpacityWidget, &QgsOpacityWidget::opacityChanged, this, &QgsPanelWidget::widgetChanged );
   connect( cboxTransparencyBand, &QgsRasterBandComboBox::bandChanged, this, &QgsPanelWidget::widgetChanged );
   connect( mSrcNoDataValueCheckBox, &QCheckBox::stateChanged, this, &QgsPanelWidget::widgetChanged );
-  connect( leNoDataValue, &QLineEdit::textEdited, this, &QgsPanelWidget::widgetChanged );
-  leNoDataValue->setValidator( new QgsDoubleValidator( std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max(), this ) );
+  connect( leNoDataValue, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsPanelWidget::widgetChanged );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( leNoDataValue );
   connect( mNodataColorButton, &QgsColorButton::colorChanged, this, &QgsPanelWidget::widgetChanged );
 
   mPixelSelectorTool = nullptr;
@@ -165,16 +166,16 @@ void QgsRasterTransparencyWidget::syncToLayer()
     if ( !noDataRangeList.isEmpty() )
     {
       const double v = QgsRasterBlock::printValue( noDataRangeList.value( 0 ).min() ).toDouble();
-      leNoDataValue->setText( QLocale().toString( v, 'g', 20 ) );
+      whileBlocking( leNoDataValue )->setValue( v );
     }
     else
     {
-      leNoDataValue->setText( QString() );
+      whileBlocking( leNoDataValue )->clear();
     }
   }
   else
   {
-    leNoDataValue->setText( QString() );
+    whileBlocking( leNoDataValue )->clear();
   }
 
   mPropertyCollection = mRasterLayer->pipe()->dataDefinedProperties();
@@ -482,7 +483,7 @@ void QgsRasterTransparencyWidget::applyToRasterProvider( QgsRasterDataProvider *
 {
   //set NoDataValue
   QgsRasterRangeList myNoDataRangeList;
-  if ( !leNoDataValue->text().isEmpty() )
+  if ( leNoDataValue->lineEdit() && !leNoDataValue->lineEdit()->text().isEmpty() )
   {
     bool myDoubleOk = false;
     const double myNoDataValue = QgsDoubleValidator::toDouble( leNoDataValue->text(), &myDoubleOk );

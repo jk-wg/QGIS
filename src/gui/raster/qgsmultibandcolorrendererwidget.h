@@ -27,7 +27,7 @@ class QgsContrastEnhancement;
 class QgsMultiBandColorRenderer;
 class QgsRasterDataProvider;
 class QgsRasterLayer;
-class QLineEdit;
+class QgsDoubleSpinBox;
 class QgsRasterMinMaxWidget;
 
 /**
@@ -74,18 +74,18 @@ class GUI_EXPORT QgsMultiBandColorRendererWidget : public QgsRasterRendererWidge
 
   private slots:
     void onBandChanged( int );
-    void mRedMinLineEdit_textChanged( const QString & );
-    void mRedMaxLineEdit_textChanged( const QString & );
-    void mGreenMinLineEdit_textChanged( const QString & );
-    void mGreenMaxLineEdit_textChanged( const QString & );
-    void mBlueMinLineEdit_textChanged( const QString & );
-    void mBlueMaxLineEdit_textChanged( const QString & );
+    void mRedMinLineEdit_valueChanged( double );
+    void mRedMaxLineEdit_valueChanged( double );
+    void mGreenMinLineEdit_valueChanged( double );
+    void mGreenMaxLineEdit_valueChanged( double );
+    void mBlueMinLineEdit_valueChanged( double );
+    void mBlueMaxLineEdit_valueChanged( double );
 
   private:
     void createValidators();
     void setCustomMinMaxValues( QgsMultiBandColorRenderer *r, const QgsRasterDataProvider *provider, int redBand, int GreenBand, int blueBand );
-    //! Reads min/max values from contrast enhancement and fills values into the min/max line edits
-    void setMinMaxValue( const QgsContrastEnhancement *ce, QLineEdit *minEdit, QLineEdit *maxEdit );
+    //! Reads min/max values from contrast enhancement and fills values into the min/max controls
+    void setMinMaxValue( const QgsContrastEnhancement *ce, QgsDoubleSpinBox *minEdit, QgsDoubleSpinBox *maxEdit );
     QgsRasterMinMaxWidget *mMinMaxWidget = nullptr;
     bool mDisableMinMaxWidgetRefresh = false;
 

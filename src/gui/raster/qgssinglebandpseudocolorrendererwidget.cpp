@@ -20,6 +20,7 @@
 #include "qgsdoublevalidator.h"
 #include "qgsguiutils.h"
 #include "qgsmapcanvas.h"
+#include "qgsrasternumericformatutils.h"
 #include "qgsrasterdataprovider.h"
 #include "qgsrasterlayer.h"
 #include "qgsrasterminmaxwidget.h"
@@ -50,10 +51,8 @@ QgsSingleBandPseudoColorRendererWidget::QgsSingleBandPseudoColorRendererWidget( 
 
   mColorRampShaderWidget->initializeForUseWithRasterLayer();
 
-  connect( mMinLineEdit, &QLineEdit::textChanged, this, &QgsSingleBandPseudoColorRendererWidget::mMinLineEdit_textChanged );
-  connect( mMaxLineEdit, &QLineEdit::textChanged, this, &QgsSingleBandPseudoColorRendererWidget::mMaxLineEdit_textChanged );
-  connect( mMinLineEdit, &QLineEdit::textEdited, this, &QgsSingleBandPseudoColorRendererWidget::mMinLineEdit_textEdited );
-  connect( mMaxLineEdit, &QLineEdit::textEdited, this, &QgsSingleBandPseudoColorRendererWidget::mMaxLineEdit_textEdited );
+  connect( mMinLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsSingleBandPseudoColorRendererWidget::mMinLineEdit_valueChanged );
+  connect( mMaxLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsSingleBandPseudoColorRendererWidget::mMaxLineEdit_valueChanged );
 
   if ( !mRasterLayer )
   {
@@ -67,8 +66,8 @@ QgsSingleBandPseudoColorRendererWidget::QgsSingleBandPseudoColorRendererWidget( 
   }
 
   // Must be before adding items to mBandComboBox (signal)
-  mMinLineEdit->setValidator( new QgsDoubleValidator( mMinLineEdit ) );
-  mMaxLineEdit->setValidator( new QgsDoubleValidator( mMaxLineEdit ) );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mMinLineEdit );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mMaxLineEdit );
 
   mMinMaxWidget = new QgsRasterMinMaxWidget( layer, this );
   mMinMaxWidget->setExtent( extent );
@@ -83,6 +82,7 @@ QgsSingleBandPseudoColorRendererWidget::QgsSingleBandPseudoColorRendererWidget( 
   mBandComboBox->setLayer( mRasterLayer );
 
   setFromRenderer( layer->renderer() );
+  updateMinMaxSpinBoxPrecision();
 
   connect( mMinMaxWidget, &QgsRasterMinMaxWidget::load, this, &QgsSingleBandPseudoColorRendererWidget::loadMinMax );
   connect( mMinMaxWidget, &QgsRasterMinMaxWidget::widgetChanged, this, &QgsSingleBandPseudoColorRendererWidget::widgetChanged );
@@ -171,10 +171,13 @@ void QgsSingleBandPseudoColorRendererWidget::setFromRenderer( const QgsRasterRen
     mMinMaxWidget->setBands( QList<int>() << mBandComboBox->currentBand() );
     mColorRampShaderWidget->setRasterBand( mBandComboBox->currentBand() );
   }
+
+  updateMinMaxSpinBoxPrecision();
 }
 
 void QgsSingleBandPseudoColorRendererWidget::bandChanged()
 {
+  updateMinMaxSpinBoxPrecision();
   QList<int> bands;
   bands.append( mBandComboBox->currentBand() );
   mMinMaxWidget->setBands( bands );
@@ -186,8 +189,8 @@ void QgsSingleBandPseudoColorRendererWidget::loadMinMax( int bandNo, double min,
 {
   QgsDebugMsgLevel( u"theBandNo = %1 min = %2 max = %3"_s.arg( bandNo ).arg( min ).arg( max ), 2 );
 
-  const QString oldMinTextvalue = mMinLineEdit->text();
-  const QString oldMaxTextvalue = mMaxLineEdit->text();
+  const QString oldMinTextValue = mMinLineEdit->text();
+  const QString oldMaxTextValue = mMaxLineEdit->text();
 
   if ( std::isnan( min ) )
   {
@@ -195,7 +198,7 @@ void QgsSingleBandPseudoColorRendererWidget::loadMinMax( int bandNo, double min,
   }
   else
   {
-    whileBlocking( mMinLineEdit )->setText( displayValueWithMaxPrecision( min ) );
+    whileBlocking( mMinLineEdit )->setValue( min );
   }
 
   if ( std::isnan( max ) )
@@ -204,13 +207,13 @@ void QgsSingleBandPseudoColorRendererWidget::loadMinMax( int bandNo, double min,
   }
   else
   {
-    whileBlocking( mMaxLineEdit )->setText( displayValueWithMaxPrecision( max ) );
+    whileBlocking( mMaxLineEdit )->setValue( max );
   }
 
   // We compare old min and new min as text because QString::number keeps a fixed number of significant
   // digits (default 6) and so loaded min/max will always differ from current one, which triggers a
   // classification, and wipe out every user modification (see https://github.com/qgis/QGIS/issues/36172)
-  if ( mMinLineEdit->text() != oldMinTextvalue || mMaxLineEdit->text() != oldMaxTextvalue )
+  if ( mMinLineEdit->text() != oldMinTextValue || mMaxLineEdit->text() != oldMaxTextValue )
   {
     whileBlocking( mColorRampShaderWidget )->setRasterBand( bandNo );
     whileBlocking( mColorRampShaderWidget )->setMinimumMaximumAndClassify( min, max );
@@ -220,25 +223,27 @@ void QgsSingleBandPseudoColorRendererWidget::loadMinMax( int bandNo, double min,
 
 void QgsSingleBandPseudoColorRendererWidget::loadMinMaxFromTree( double min, double max )
 {
-  whileBlocking( mMinLineEdit )->setText( displayValueWithMaxPrecision( min ) );
-  whileBlocking( mMaxLineEdit )->setText( displayValueWithMaxPrecision( max ) );
+  whileBlocking( mMinLineEdit )->setValue( min );
+  whileBlocking( mMaxLineEdit )->setValue( max );
   minMaxModified();
 }
 
 
-void QgsSingleBandPseudoColorRendererWidget::setLineEditValue( QLineEdit *lineEdit, double value )
+void QgsSingleBandPseudoColorRendererWidget::setLineEditValue( QgsDoubleSpinBox *lineEdit, double value )
 {
-  QString s;
-  if ( !std::isnan( value ) )
+  if ( std::isnan( value ) )
   {
-    s = displayValueWithMaxPrecision( value );
+    whileBlocking( lineEdit )->clear();
   }
-  lineEdit->setText( s );
+  else
+  {
+    whileBlocking( lineEdit )->setValue( value );
+  }
 }
 
-double QgsSingleBandPseudoColorRendererWidget::lineEditValue( const QLineEdit *lineEdit ) const
+double QgsSingleBandPseudoColorRendererWidget::lineEditValue( const QgsDoubleSpinBox *lineEdit ) const
 {
-  if ( lineEdit->text().isEmpty() )
+  if ( lineEdit->lineEdit() && lineEdit->lineEdit()->text().isEmpty() )
   {
     return std::numeric_limits<double>::quiet_NaN();
   }
@@ -246,29 +251,17 @@ double QgsSingleBandPseudoColorRendererWidget::lineEditValue( const QLineEdit *l
   return QgsDoubleValidator::toDouble( lineEdit->text() );
 }
 
-void QgsSingleBandPseudoColorRendererWidget::mMinLineEdit_textEdited( const QString & )
+void QgsSingleBandPseudoColorRendererWidget::mMinLineEdit_valueChanged( double )
 {
   minMaxModified();
   whileBlocking( mColorRampShaderWidget )->setMinimumMaximumAndClassify( lineEditValue( mMinLineEdit ), lineEditValue( mMaxLineEdit ) );
   emit widgetChanged();
 }
 
-void QgsSingleBandPseudoColorRendererWidget::mMaxLineEdit_textEdited( const QString & )
+void QgsSingleBandPseudoColorRendererWidget::mMaxLineEdit_valueChanged( double )
 {
   minMaxModified();
   whileBlocking( mColorRampShaderWidget )->setMinimumMaximumAndClassify( lineEditValue( mMinLineEdit ), lineEditValue( mMaxLineEdit ) );
-  emit widgetChanged();
-}
-
-void QgsSingleBandPseudoColorRendererWidget::mMinLineEdit_textChanged( const QString & )
-{
-  whileBlocking( mColorRampShaderWidget )->setMinimumMaximum( lineEditValue( mMinLineEdit ), lineEditValue( mMaxLineEdit ) );
-  emit widgetChanged();
-}
-
-void QgsSingleBandPseudoColorRendererWidget::mMaxLineEdit_textChanged( const QString & )
-{
-  whileBlocking( mColorRampShaderWidget )->setMinimumMaximum( lineEditValue( mMinLineEdit ), lineEditValue( mMaxLineEdit ) );
   emit widgetChanged();
 }
 
@@ -293,14 +286,32 @@ QString QgsSingleBandPseudoColorRendererWidget::displayValueWithMaxPrecision( co
 
 void QgsSingleBandPseudoColorRendererWidget::setMin( const QString &value, int )
 {
-  mMinLineEdit->setText( value );
+  if ( value.isEmpty() )
+    mMinLineEdit->clear();
+  else
+    mMinLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
   minMaxModified();
   mColorRampShaderWidget->classify();
 }
 
 void QgsSingleBandPseudoColorRendererWidget::setMax( const QString &value, int )
 {
-  mMaxLineEdit->setText( value );
+  if ( value.isEmpty() )
+    mMaxLineEdit->clear();
+  else
+    mMaxLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
   minMaxModified();
   mColorRampShaderWidget->classify();
+}
+
+void QgsSingleBandPseudoColorRendererWidget::updateMinMaxSpinBoxPrecision()
+{
+  if ( !mRasterLayer || !mRasterLayer->dataProvider() )
+  {
+    return;
+  }
+
+  const Qgis::DataType dataType = mRasterLayer->dataProvider()->dataType( mBandComboBox->currentBand() );
+  QgsRasterNumericFormatUtils::setDataTypePrecision( mMinLineEdit, dataType );
+  QgsRasterNumericFormatUtils::setDataTypePrecision( mMaxLineEdit, dataType );
 }

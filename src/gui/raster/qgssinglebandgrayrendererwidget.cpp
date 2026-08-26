@@ -19,6 +19,7 @@
 
 #include "qgscolorramplegendnodewidget.h"
 #include "qgsdoublevalidator.h"
+#include "qgsrasternumericformatutils.h"
 #include "qgsrasterdataprovider.h"
 #include "qgsrasterlayer.h"
 #include "qgsrasterminmaxwidget.h"
@@ -34,16 +35,16 @@ QgsSingleBandGrayRendererWidget::QgsSingleBandGrayRendererWidget( QgsRasterLayer
   : QgsRasterRendererWidget( layer, extent )
 {
   setupUi( this );
-  connect( mMinLineEdit, &QLineEdit::textChanged, this, &QgsSingleBandGrayRendererWidget::mMinLineEdit_textChanged );
-  connect( mMaxLineEdit, &QLineEdit::textChanged, this, &QgsSingleBandGrayRendererWidget::mMaxLineEdit_textChanged );
+  connect( mMinLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsSingleBandGrayRendererWidget::mMinLineEdit_valueChanged );
+  connect( mMaxLineEdit, qOverload<double>( &QgsDoubleSpinBox::valueChanged ), this, &QgsSingleBandGrayRendererWidget::mMaxLineEdit_valueChanged );
 
   connect( mLegendSettingsButton, &QPushButton::clicked, this, &QgsSingleBandGrayRendererWidget::showLegendSettings );
 
   mGradientComboBox->insertItem( 0, tr( "Black to White" ), QgsSingleBandGrayRenderer::BlackToWhite );
   mGradientComboBox->insertItem( 1, tr( "White to Black" ), QgsSingleBandGrayRenderer::WhiteToBlack );
 
-  mMinLineEdit->setValidator( new QgsDoubleValidator( mMinLineEdit ) );
-  mMaxLineEdit->setValidator( new QgsDoubleValidator( mMaxLineEdit ) );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mMinLineEdit );
+  QgsRasterNumericFormatUtils::configureRasterNumericSpinBox( mMaxLineEdit );
 
   if ( mRasterLayer )
   {
@@ -122,24 +123,14 @@ void QgsSingleBandGrayRendererWidget::setMapCanvas( QgsMapCanvas *canvas )
   mMinMaxWidget->setMapCanvas( canvas );
 }
 
-void QgsSingleBandGrayRendererWidget::mMinLineEdit_textChanged( const QString & )
+void QgsSingleBandGrayRendererWidget::mMinLineEdit_valueChanged( double )
 {
-  QString text = mMinLineEdit->text();
-  int pos = 0;
-  if ( mMinLineEdit->validator()->validate( text, pos ) == QValidator::Acceptable )
-  {
-    minMaxModified();
-  }
+  minMaxModified();
 }
 
-void QgsSingleBandGrayRendererWidget::mMaxLineEdit_textChanged( const QString & )
+void QgsSingleBandGrayRendererWidget::mMaxLineEdit_valueChanged( double )
 {
-  QString text = mMaxLineEdit->text();
-  int pos = 0;
-  if ( mMaxLineEdit->validator()->validate( text, pos ) == QValidator::Acceptable )
-  {
-    minMaxModified();
-  }
+  minMaxModified();
 }
 
 void QgsSingleBandGrayRendererWidget::minMaxModified()
@@ -169,7 +160,7 @@ void QgsSingleBandGrayRendererWidget::loadMinMax( int bandNo, double min, double
   }
   else
   {
-    mMinLineEdit->setText( QLocale().toString( min ) );
+    mMinLineEdit->setValue( min );
   }
 
   if ( std::isnan( max ) )
@@ -178,7 +169,7 @@ void QgsSingleBandGrayRendererWidget::loadMinMax( int bandNo, double min, double
   }
   else
   {
-    mMaxLineEdit->setText( QLocale().toString( max ) );
+    mMaxLineEdit->setValue( max );
   }
   mDisableMinMaxWidgetRefresh = false;
 }
@@ -206,8 +197,8 @@ void QgsSingleBandGrayRendererWidget::setFromRenderer( const QgsRasterRenderer *
     {
       //minmax
       mDisableMinMaxWidgetRefresh = true;
-      mMinLineEdit->setText( QLocale().toString( ce->minimumValue() ) );
-      mMaxLineEdit->setText( QLocale().toString( ce->maximumValue() ) );
+      mMinLineEdit->setValue( ce->minimumValue() );
+      mMaxLineEdit->setValue( ce->maximumValue() );
       mDisableMinMaxWidgetRefresh = false;
       //contrast enhancement algorithm
       mContrastEnhancementComboBox->setCurrentIndex( mContrastEnhancementComboBox->findData( ( int ) ( ce->contrastEnhancementAlgorithm() ) ) );
@@ -223,14 +214,20 @@ void QgsSingleBandGrayRendererWidget::setFromRenderer( const QgsRasterRenderer *
 void QgsSingleBandGrayRendererWidget::setMin( const QString &value, int )
 {
   mDisableMinMaxWidgetRefresh = true;
-  mMinLineEdit->setText( value );
+  if ( value.isEmpty() )
+    mMinLineEdit->clear();
+  else
+    mMinLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
   mDisableMinMaxWidgetRefresh = false;
 }
 
 void QgsSingleBandGrayRendererWidget::setMax( const QString &value, int )
 {
   mDisableMinMaxWidgetRefresh = true;
-  mMaxLineEdit->setText( value );
+  if ( value.isEmpty() )
+    mMaxLineEdit->clear();
+  else
+    mMaxLineEdit->setValue( QgsDoubleValidator::toDouble( value ) );
   mDisableMinMaxWidgetRefresh = false;
 }
 
