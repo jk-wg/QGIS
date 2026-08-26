@@ -42,6 +42,7 @@ set(TESTS
   testqgsfilewidget.cpp
   testqgsexternalstoragefilewidget.cpp
   testqgsfocuswatcher.cpp
+  testqgshistogramwidget.cpp
   testqgshtmlwidgetwrapper.cpp
   testqgsmapcanvas.cpp
   testqgsmaptoolcapture.cpp
