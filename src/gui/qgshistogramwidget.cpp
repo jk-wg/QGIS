@@ -312,14 +312,6 @@ QwtPlotHistogram *QgsHistogramWidget::createPlotHistogram( const QString &title,
   {
     histogram->setPen( pen );
   }
-  else if ( brush.color().lightness() > 200 )
-  {
-    QPen p;
-    p.setColor( brush.color().darker( 150 ) );
-    p.setWidth( 0 );
-    p.setCosmetic( true );
-    histogram->setPen( p );
-  }
   else
   {
     histogram->setPen( QPen( Qt::NoPen ) );
