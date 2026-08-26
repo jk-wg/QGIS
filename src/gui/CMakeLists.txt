@@ -603,6 +603,7 @@ set(QGIS_GUI_SRCS
   qgsblendmodecombobox.cpp
   qgsbrowsertreeview.cpp
   qgsbrowserguimodel.cpp
+  qgsemptystatetreeview.cpp
   qgsbrowserdockwidget.cpp
   qgsbrowserwidget.cpp
   qgsbusyindicatordialog.cpp
@@ -878,6 +879,7 @@ set(QGIS_GUI_HDRS
   qgsbrowserwidget.h
   qgsbrowserguimodel.h
   qgsbrowsertreeview.h
+  qgsemptystatetreeview.h
   qgsbusyindicatordialog.h
   qgscharacterselectordialog.h
   qgscheckablecombobox.h

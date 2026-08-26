@@ -28,6 +28,7 @@ set(TESTS
   testqgsmaptoolzoom.cpp
   testqgsmaptooledit.cpp
   testqgscategorizedrendererwidget.cpp
+  testqgsemptystatetreeview.cpp
   testqgsdatumtransformdialog.cpp
   testqgsdiagramproperties.cpp
   testqgsdockablewidgethelper.cpp
