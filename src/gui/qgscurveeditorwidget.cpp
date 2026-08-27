@@ -47,6 +47,7 @@ using namespace Qt::StringLiterals;
 
 #include <qwt_plot_renderer.h>
 #include <qwt_plot_histogram.h>
+#include <qwt_scale_widget.h>
 
 QgsCurveEditorWidget::QgsCurveEditorWidget( QWidget *parent, const QgsCurveTransform &transform )
   : QWidget( parent )
@@ -352,17 +353,12 @@ QwtPlotHistogram *QgsCurveEditorWidget::createPlotHistogram( const QBrush &brush
   {
     histogram->setPen( pen );
   }
-  else if ( brush.color().lightness() > 200 )
+  else
   {
-    QPen p;
-    p.setColor( brush.color().darker( 150 ) );
+    QPen p( mPlot->axisWidget( QwtPlot::xBottom )->palette().color( QPalette::Text ) );
     p.setWidth( 0 );
     p.setCosmetic( true );
     histogram->setPen( p );
-  }
-  else
-  {
-    histogram->setPen( QPen( Qt::NoPen ) );
   }
   return histogram;
 }
