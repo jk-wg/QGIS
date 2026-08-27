@@ -95,12 +95,15 @@
     </layout>
    </item>
    <item row="2" column="0">
-    <widget class="QTreeView" name="mTreeView">
+    <widget class="QgsEmptyStateTreeView" name="mTreeView">
      <property name="minimumSize">
       <size>
        <width>0</width>
        <height>280</height>
       </size>
+     </property>
+     <property name="placeholderText">
+      <string>Select a band and click Classify to create color classes.</string>
      </property>
     </widget>
    </item>
@@ -196,6 +199,11 @@
    <extends>QToolButton</extends>
    <header>qgscolorrampbutton.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QgsEmptyStateTreeView</class>
+   <extends>QTreeView</extends>
+   <header>qgsemptystatetreeview.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>

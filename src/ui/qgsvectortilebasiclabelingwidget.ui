@@ -65,7 +65,7 @@
         </layout>
        </item>
        <item>
-        <widget class="QTreeView" name="viewStyles">
+        <widget class="QgsEmptyStateTreeView" name="viewStyles">
          <property name="acceptDrops">
           <bool>true</bool>
          </property>
@@ -83,6 +83,9 @@
          </property>
          <property name="rootIsDecorated">
           <bool>false</bool>
+         </property>
+         <property name="placeholderText">
+          <string>Click '+' to add a new labeling rule.</string>
          </property>
         </widget>
        </item>
@@ -166,6 +169,11 @@
    <class>QgsFilterLineEdit</class>
    <extends>QLineEdit</extends>
    <header>qgsfilterlineedit.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QgsEmptyStateTreeView</class>
+   <extends>QTreeView</extends>
+   <header>qgsemptystatetreeview.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
