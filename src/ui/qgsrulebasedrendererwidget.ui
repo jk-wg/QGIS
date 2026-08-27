@@ -24,7 +24,7 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QTreeView" name="viewRules">
+    <widget class="QgsEmptyStateTreeView" name="viewRules">
      <property name="contextMenuPolicy">
       <enum>Qt::CustomContextMenu</enum>
      </property>
@@ -45,6 +45,9 @@
      </property>
      <property name="allColumnsShowFocus">
       <bool>true</bool>
+     </property>
+     <property name="placeholderText">
+      <string>Click '+' to add a new rule.</string>
      </property>
      <attribute name="headerMinimumSectionSize">
       <number>100</number>
@@ -176,4 +179,11 @@
   <include location="../../images/images.qrc"/>
  </resources>
  <connections/>
+ <customwidgets>
+  <customwidget>
+   <class>QgsEmptyStateTreeView</class>
+   <extends>QTreeView</extends>
+   <header>qgsemptystatetreeview.h</header>
+  </customwidget>
+ </customwidgets>
 </ui>
