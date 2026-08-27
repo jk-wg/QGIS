@@ -34,6 +34,7 @@ using namespace Qt::StringLiterals;
 
 const QgsSettingsEntryBool *QgsHistogramWidget::settingsHistogramShowMean = new QgsSettingsEntryBool( u"histogram-show-mean"_s, QgsSettingsTree::sTreeHistogram, false );
 const QgsSettingsEntryBool *QgsHistogramWidget::settingsHistogramShowStdev = new QgsSettingsEntryBool( u"histogram-show-stdev"_s, QgsSettingsTree::sTreeHistogram, false );
+const QgsSettingsEntryBool *QgsHistogramWidget::settingsHistogramShowBarOutlines = new QgsSettingsEntryBool( u"histogram-show-bar-outlines"_s, QgsSettingsTree::sTreeHistogram, true );
 
 // QWT Charting widget
 #include <qwt_global.h>
@@ -46,6 +47,7 @@ const QgsSettingsEntryBool *QgsHistogramWidget::settingsHistogramShowStdev = new
 #include <qwt_picker_machine.h>
 #include <qwt_plot_layout.h>
 #include <qwt_plot_renderer.h>
+#include <qwt_scale_widget.h>
 #include <qwt_plot_histogram.h>
 #include <qwt_text.h>
 
@@ -68,10 +70,12 @@ QgsHistogramWidget::QgsHistogramWidget( QWidget *parent, QgsVectorLayer *layer, 
 
   mMeanCheckBox->setChecked( settingsHistogramShowMean->value() );
   mStdevCheckBox->setChecked( settingsHistogramShowStdev->value() );
+  mShowBarOutlinesCheckBox->setChecked( settingsHistogramShowBarOutlines->value() );
 
   connect( mBinsSpinBox, static_cast<void ( QSpinBox::* )( int )>( &QSpinBox::valueChanged ), this, &QgsHistogramWidget::refresh );
   connect( mMeanCheckBox, &QAbstractButton::toggled, this, &QgsHistogramWidget::refresh );
   connect( mStdevCheckBox, &QAbstractButton::toggled, this, &QgsHistogramWidget::refresh );
+  connect( mShowBarOutlinesCheckBox, &QAbstractButton::toggled, this, &QgsHistogramWidget::refresh );
   connect( mLoadValuesButton, &QAbstractButton::clicked, this, &QgsHistogramWidget::refreshValues );
 
   mGridPen = QPen( QColor( 0, 0, 0, 40 ) );
@@ -90,6 +94,7 @@ QgsHistogramWidget::~QgsHistogramWidget()
 {
   settingsHistogramShowMean->setValue( mMeanCheckBox->isChecked() );
   settingsHistogramShowStdev->setValue( mStdevCheckBox->isChecked() );
+  settingsHistogramShowBarOutlines->setValue( mShowBarOutlinesCheckBox->isChecked() );
 }
 
 static bool _rangesByLower( const QgsRendererRange &a, const QgsRendererRange &b )
@@ -134,6 +139,7 @@ void QgsHistogramWidget::refreshValues()
   mpPlot->setEnabled( true );
   mMeanCheckBox->setEnabled( true );
   mStdevCheckBox->setEnabled( true );
+  mShowBarOutlinesCheckBox->setEnabled( true );
   mBinsSpinBox->setEnabled( true );
 
   QApplication::restoreOverrideCursor();
@@ -165,6 +171,7 @@ void QgsHistogramWidget::clearHistogram()
   mpPlot->setEnabled( false );
   mMeanCheckBox->setEnabled( false );
   mStdevCheckBox->setEnabled( false );
+  mShowBarOutlinesCheckBox->setEnabled( false );
   mBinsSpinBox->setEnabled( false );
 }
 
@@ -308,21 +315,20 @@ QwtPlotHistogram *QgsHistogramWidget::createPlotHistogram( const QString &title,
 {
   QwtPlotHistogram *histogram = new QwtPlotHistogram( title );
   histogram->setBrush( brush );
-  if ( pen != Qt::NoPen )
+  if ( !mShowBarOutlinesCheckBox->isChecked() )
+  {
+    histogram->setPen( QPen( Qt::NoPen ) );
+  }
+  else if ( pen != Qt::NoPen )
   {
     histogram->setPen( pen );
   }
-  else if ( brush.color().lightness() > 200 )
+  else
   {
-    QPen p;
-    p.setColor( brush.color().darker( 150 ) );
+    QPen p( mpPlot->axisWidget( QwtPlot::xBottom )->palette().color( QPalette::Text ) );
     p.setWidth( 0 );
     p.setCosmetic( true );
     histogram->setPen( p );
-  }
-  else
-  {
-    histogram->setPen( QPen( Qt::NoPen ) );
   }
   return histogram;
 }
